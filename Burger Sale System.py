@@ -46,12 +46,6 @@ class Inventory:
                 ]
             }
         }
-    # def counter(self):
-    #     Burgers_list = self.catalogue.get("Burgers")
-    #     Sides_list = self.catalogue.get("Sides")
-    #     Fries_list = Sides_list.get("Fries")
-    #     Salad_list = Sides_list.get("Caesar Salad")
-
 
     def get_catalogue(self, category):
         self.menu = {}
@@ -61,33 +55,51 @@ class Inventory:
             self.menu = self.catalogue.get(category, "null")
             return self.menu
 
+    def build_initial_stock(self):
+        self.stock = {}
+        for i in range(20):
+            stock = random.randint(1, 10)
+            self.stock.update({i: stock})
+        return self.stock
+
     def build_menu(self,lst):
         for i in range(len(lst)):
             product = lst[i]
             product_id = product.get("id","null")
             product_price = product.get("price", "null")
             # print(product.keys())
-            if "name" not in product.keys():
-                product_name = product.get("size", "null")
+            if self.stock.get(product_id) == 0:
+                pass
             else:
-                product_name = product.get("name", "null")
-            print(f"{product_id}. {product_name} {product_price}")
+                if "name" not in product.keys():
+                    product_name = product.get("size", "null")
+                else:
+                    product_name = product.get("name", "null")
+                print(f"{product_id}. {product_name} {product_price}")
 
-    def build_initial_stock(self):
-        self.stock = {}
-        for i in range(20):
-            stock = random.randint(1, 10)
-            self.stock.update({i: stock})
+    def alter_stock(self,id,num):
+        current_stock = self.stock.get(id,"none")
+        deliver_status = -1
+        if current_stock != "none":
+            if num >= current_stock:
+                deliver_status = current_stock
+                self.stock[id] = 0
+            else:
+                deliver_status = num
+                self.stock[id] = current_stock - num
+        return deliver_status
 
 
 
 
 # Initiate store and menu
 Store = Inventory()
+Store.build_initial_stock()
+
+
 Burgers_menu = Store.get_catalogue("Burgers")
 Sides_menu = Store.get_catalogue("Sides")
 Drinks_menu = Store.get_catalogue("Drinks")
-
 
 
 # Display menu
