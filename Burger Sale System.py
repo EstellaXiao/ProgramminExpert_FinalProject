@@ -4,7 +4,6 @@ import asyncio
 import random
 
 
-
 class Inventory:
     def __init__(self):
         self.menu = None
@@ -57,7 +56,7 @@ class Inventory:
 
     def build_initial_stock(self):
         self.stock = {}
-        for i in range(20):
+        for i in range(1,21):
             stock = random.randint(1, 10)
             self.stock.update({i: stock})
         return self.stock
@@ -90,11 +89,116 @@ class Inventory:
         return deliver_status
 
 
+    def combo_calculator(self, order_dic):
+        self.Burger_order = []
+        self.Side_order = []
+        self.Drink_order = []
+        for id, num in order_dic.items():
+            if int(id) in range(1,7):
+                product = {}
+                product_info = self.catalogue.get("Burgers")[int(id) - 1]
+                product.update({"id":id, "feature":product_info.get("name"), "price":product_info.get("price"), "order_num": num})
+                self.Burger_order.append(product)
+            elif int(id) in range(7,10):
+                product = {}
+                product_info = self.catalogue.get("Sides").get("Fries")[int(id) - 7]
+                product.update({"id": id, "feature": product_info.get("name"), "price": product_info.get("price"), "order_num": num})
+                self.Side_order.append(product)
+            elif int(id) in range(10,12):
+                product = {}
+                product_info = self.catalogue.get("Sides").get("Caesar Salad")[int(id) - 10]
+                product.update({"id": id, "feature": product_info.get("name"), "price": product_info.get("price"), "order_num": num})
+                self.Side_order.append(product)
+            elif int(id) in range(12,15):
+                product = {}
+                product_info = self.catalogue.get("Drinks").get("Coke")[int(id)-12]
+                product.update({"id": id, "feature": product_info.get("name"), "price": product_info.get("price"), "order_num": num})
+                self.Drink_order.append(product)
+            elif int(id) in range(15,18):
+                product = {}
+                product_info = self.catalogue.get("Drinks").get("Ginger Ale")[int(id) - 15]
+                product.update(
+                    {"id": id, "feature": product_info.get("name"), "price": product_info.get("price"), "order_num": num})
+                self.Drink_order.append(product)
+            elif int(id) in range(18,21):
+                product = {}
+                product_info = self.catalogue.get("Drinks").get("Chocolate Milk Shake")[int(id) - 18]
+                product.update(
+                    {"id": id, "feature": product_info.get("name"), "price": product_info.get("price"), "order_num": num})
+                self.Drink_order.append(product)
+        self.Burger_order = sorted(self.Burger_order,key = lambda x: x.get("price"), reverse=True)
+        self.Side_order = sorted(self.Side_order, key=lambda x: x.get("price"), reverse=True)
+        self.Drink_order = sorted(self.Drink_order, key=lambda x: x.get("price"), reverse=True)
+
+        combo_list = []
+        single_purchase_list = []
+
+        # if self.Burger_order == [] or self.Side_order == [] or self.Drink_order == []:
+        #     pass
+        # else:
+        #     product
+
+
+
+
+
+# Basic functions
+
+def number_teller(n):
+    try:
+        float(n)
+        result = True
+    except ValueError:
+        result = False
+    return result
+
+
+# System-related functions
+
+def alter_initial_order(stock,order_dic):
+    for id, num in order_dic.itmes():
+        deliver_status = stock.alter_stock(id,num)
+        if deliver_status == -1:
+            order_dic.pop(id)
+        else:
+            order_dic[id] = deliver_status
+    return order_dic
+
+
+def input_order(stock):
+    order_list = []
+    print("Please enter the number of items that you would like to add to your order. Enter q to complete your order.")
+    while True:
+        order = input("Enter an item number: ")
+        if order == "q":
+            print("Placing order...")
+            break
+        elif number_teller(order):
+            order_num = int(order)
+            current_available_stock = stock.get(order_num,"none")
+            if current_available_stock == "none":
+                print("[Failed to order] Your request is out of stock. Please go for another product.")
+            else:
+                ordered_num = order_list.count(order_num)
+                if ordered_num + 1 <= current_available_stock:
+                    order_list.append(order_num)
+                else:
+                    print("[Failed to order] Your request is out of stock. Please go for another product.")
+        elif not number_teller(order):
+            print("[Failed to order] Please enter a valid input.")
+    return order_list
+
+def order_list_generator(order_list):
+    order_dic = {}
+    for i in order_list:
+        order_dic[i] = order_dic.get(i,0) + 1
+    return order_dic
 
 
 # Initiate store and menu
 Store = Inventory()
-Store.build_initial_stock()
+stock = Store.build_initial_stock()
+print(stock)
 
 
 Burgers_menu = Store.get_catalogue("Burgers")
@@ -125,3 +229,10 @@ print("\nChocolate Milk Shake")
 Store.build_menu(Drinks_menu.get("Chocolate Milk Shake"))
 print("")
 print("-" * 10, "End of Menu", "-" * 10)
+
+# Input order
+order_list = input_order(stock)
+# print(order_list)
+order_dic = order_list_generator(order_list)
+# print(order_dic)
+print(Store.combo_calculator(order_dic))
