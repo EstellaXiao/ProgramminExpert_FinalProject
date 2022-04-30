@@ -17,16 +17,6 @@ def number_teller(n):
 
 # System-related functions
 
-def alter_initial_order(stock,order_dic):
-    for id, num in order_dic.itmes():
-        deliver_status = stock.alter_stock(id,num)
-        if deliver_status == -1:
-            order_dic.pop(id)
-        else:
-            order_dic[id] = deliver_status
-    return order_dic
-
-
 def input_order(stock):
     order_list = []
     print("Please enter the number of items that you would like to add to your order. Enter q to complete your order.")
@@ -37,7 +27,7 @@ def input_order(stock):
             break
         elif number_teller(order):
             order_num = int(order)
-            current_available_stock = stock.get(order_num,"none")
+            current_available_stock = stock.get(order_num, "none")
             if current_available_stock == "none":
                 print("[Failed to order] Your request is out of stock. Please go for another product.")
             else:
@@ -50,20 +40,23 @@ def input_order(stock):
             print("[Failed to order] Please enter a valid input.")
     return order_list
 
+
 def order_list_generator(order_list):
     order_dic = {}
     for i in order_list:
-        order_dic[i] = order_dic.get(i,0) + 1
+        order_dic[i] = order_dic.get(i, 0) + 1
     return order_dic
+
 
 def combo_maker(lst):
     target = lst[0]
-    product_name_default = target.get("feature","other")
+    product_name_default = target.get("feature", "other")
     price = target.get("price")
     if product_name_default == "other":
         product_name_default = target.get("size")
     target["order_num"] = target.get("order_num") - 1
     return product_name_default, price
+
 
 def combo_popper(lst):
     num_available = lst[0].get("order_num")
@@ -72,8 +65,32 @@ def combo_popper(lst):
     return lst
 
 
+def new_order_initiator():
+    status = None
+    while True:
+        pay_status = input("Would you like to make another order (yes/no)? ")
+        if pay_status.lower() == "yes":
+            status = True
+            break
+        elif pay_status.lower() == "no":
+            status = False
+            print("Goodbye! See you next time!")
+            break
+        else:
+            print("Invalid input: please enter yes/no to confirm your order.")
+    return status
+
+
+# Class Inventory
 class Inventory:
     def __init__(self):
+        self.order_price = 0
+        self.final_order_dic = None
+        self.combo_list = []
+        self.single_purchase_list = []
+        self.Burger_order = None
+        self.Side_order = None
+        self.Drink_order = None
         self.menu = None
         self.catalogue = {
             "Burgers": [
@@ -124,15 +141,16 @@ class Inventory:
 
     def build_initial_stock(self):
         self.stock = {}
-        for i in range(1,21):
+        for i in range(1, 21):
             stock = random.randint(1, 10)
             self.stock.update({i: stock})
+        print(f"the initial stock: {self.stock}")
         return self.stock
 
-    def build_menu(self,lst):
+    def build_menu(self, lst):
         for i in range(len(lst)):
             product = lst[i]
-            product_id = product.get("id","null")
+            product_id = product.get("id", "null")
             product_price = product.get("price", "null")
             # print(product.keys())
             if self.stock.get(product_id) == 0:
@@ -144,8 +162,8 @@ class Inventory:
                     product_name = product.get("name", "null")
                 print(f"{product_id}. {product_name} {product_price}")
 
-    def alter_stock(self,id,num):
-        current_stock = self.stock.get(id,"none")
+    def alter_stock(self, id, num):
+        current_stock = self.stock.get(id, "none")
         deliver_status = -1
         if current_stock != "none":
             if num >= current_stock:
@@ -156,50 +174,66 @@ class Inventory:
                 self.stock[id] = current_stock - num
         return deliver_status
 
-
-
+    def alter_initial_order(self, stock, order_dic):
+        self.final_order_dic = {}
+        for id, num in order_dic.items():
+            deliver_status = stock.alter_stock(id, num)
+            if deliver_status == -1:
+                order_dic.pop(id)
+            else:
+                order_dic[id] = deliver_status
+        self.final_order_dic = order_dic
+        print(f"final_order_dic: {self.final_order_dic}")
+        print(f"the current stock: {self.stock}")
+        return self.final_order_dic
 
     def combo_calculator(self, order_dic):
         self.Burger_order = []
         self.Side_order = []
         self.Drink_order = []
         for id, num in order_dic.items():
-            if int(id) in range(1,7):
+            if int(id) in range(1, 7):
                 product = {}
                 product_info = self.catalogue.get("Burgers")[int(id) - 1]
-                product.update({"id":id, "feature":product_info.get("name"), "price":product_info.get("price"), "order_num": num})
+                product.update({"id": id, "feature": product_info.get("name"), "price": product_info.get("price"),
+                                "order_num": num})
                 self.Burger_order.append(product)
-            elif int(id) in range(7,10):
+            elif int(id) in range(7, 10):
                 product = {}
                 product_info = self.catalogue.get("Sides").get("Fries")[int(id) - 7]
                 size = product_info.get("size")
-                product.update({"id": id, "feature": f"{size} Fries", "price": product_info.get("price"), "order_num": num})
+                product.update(
+                    {"id": id, "feature": f"{size} Fries", "price": product_info.get("price"), "order_num": num})
                 self.Side_order.append(product)
-            elif int(id) in range(10,12):
+            elif int(id) in range(10, 12):
                 product = {}
                 product_info = self.catalogue.get("Sides").get("Caesar Salad")[int(id) - 10]
                 size = product_info.get("size")
-                product.update({"id": id, "feature": f"{size} Caesar Salad", "price": product_info.get("price"), "order_num": num})
+                product.update(
+                    {"id": id, "feature": f"{size} Caesar Salad", "price": product_info.get("price"), "order_num": num})
                 self.Side_order.append(product)
-            elif int(id) in range(12,15):
+            elif int(id) in range(12, 15):
                 product = {}
-                product_info = self.catalogue.get("Drinks").get("Coke")[int(id)-12]
+                product_info = self.catalogue.get("Drinks").get("Coke")[int(id) - 12]
                 size = product_info.get("size")
-                product.update({"id": id, "feature": f"{size} Coke", "price": product_info.get("price"), "order_num": num})
+                product.update(
+                    {"id": id, "feature": f"{size} Coke", "price": product_info.get("price"), "order_num": num})
                 self.Drink_order.append(product)
-            elif int(id) in range(15,18):
+            elif int(id) in range(15, 18):
                 product = {}
                 product_info = self.catalogue.get("Drinks").get("Ginger Ale")[int(id) - 15]
                 size = product_info.get("size")
-                product.update({"id": id, "feature": f"{size} Ginger Ale", "price": product_info.get("price"), "order_num": num})
+                product.update(
+                    {"id": id, "feature": f"{size} Ginger Ale", "price": product_info.get("price"), "order_num": num})
                 self.Drink_order.append(product)
-            elif int(id) in range(18,21):
+            elif int(id) in range(18, 21):
                 product = {}
                 product_info = self.catalogue.get("Drinks").get("Chocolate Milk Shake")[int(id) - 18]
                 size = product_info.get("size")
-                product.update({"id": id, "feature": f"{size} Chocolate Milk Shake", "price": product_info.get("price"), "order_num": num})
+                product.update({"id": id, "feature": f"{size} Chocolate Milk Shake", "price": product_info.get("price"),
+                                "order_num": num})
                 self.Drink_order.append(product)
-        self.Burger_order = sorted(self.Burger_order,key = lambda x: x.get("price"), reverse=True)
+        self.Burger_order = sorted(self.Burger_order, key=lambda x: x.get("price"), reverse=True)
         self.Side_order = sorted(self.Side_order, key=lambda x: x.get("price"), reverse=True)
         self.Drink_order = sorted(self.Drink_order, key=lambda x: x.get("price"), reverse=True)
 
@@ -208,19 +242,24 @@ class Inventory:
         # print(f"Side order list: {self.Side_order}")
         # print(f"Drink order list: {self.Drink_order}")
 
-        combo_list = []
-        single_purchase_list = []
+        self.combo_list = []
+        self.single_purchase_list = []
 
         while True:
             if self.Burger_order == [] or self.Side_order == [] or self.Drink_order == []:
+                single_product_list = self.Burger_order + self.Side_order + self.Drink_order
+                for i in single_product_list:
+                    single_product = {}
+                    product_name = i.get("feature")
+                    product_price = i.get("price")
+                    single_product.update({"product": product_name, "price": product_price})
+                    self.single_purchase_list.append(single_product)
                 break
 
             if self.Burger_order != [] and self.Side_order != [] and self.Drink_order != []:
-
-                combo_burger = combo_maker(self.Burger_order) #("Python Burger", 5.99)
+                combo_burger = combo_maker(self.Burger_order)  # ("Python Burger", 5.99)
                 combo_side = combo_maker(self.Side_order)
                 combo_drink = combo_maker(self.Drink_order)
-
 
                 price = combo_burger[1] + combo_side[1] + combo_drink[1]
 
@@ -231,9 +270,8 @@ class Inventory:
                 product_compile.append(combo_drink[0])
 
                 single_combo = {}
-                single_combo.update({"product":product_compile,"price":price})
-                combo_list.append(single_combo)
-
+                single_combo.update({"product": product_compile, "price": price})
+                self.combo_list.append(single_combo)
 
                 self.Burger_order = combo_popper(self.Burger_order)
                 self.Side_order = combo_popper(self.Side_order)
@@ -243,26 +281,69 @@ class Inventory:
                 # print(f"Side order list: {self.Side_order}")
                 # print(f"Drink order list: {self.Drink_order}")
 
+        return self.combo_list, self.single_purchase_list
 
-        return combo_list
+    def order_teller(self, combo_list, single_purchase_list):
+        bonus_rate = 0.15
+        tax_rate = 0.05
+        order_price = 0
+        print("\nHere is a summary of your order: \n")
+        for i in combo_list:
+            combo_list = i.get("product")
+            combo_price = round(i.get("price") * (1 - bonus_rate),2)
 
+            order_price += combo_price
 
+            print(f"${combo_price} Burger Combo")
+            for product in combo_list:
+                print(f"  {product}")
 
+        for i in single_purchase_list:
+            product = i.get("product")
+            price = i.get("price")
 
+            order_price += price
 
+            print(f"${price} {product}")
 
+        tax = round(order_price * tax_rate,2)
+        self.order_price = order_price + tax
 
+        print(f"\nSubtotal: ${order_price}")
+        print(f"Tax: ${tax}")
+        print(f"Total ${order_price + tax}")
+
+    def pay_teller(self):
+        status = None
+        while True:
+            pay_status = input(f"\nWould you like to purchase this order for ${self.order_price} (yes/no)? ")
+            if pay_status.lower() == "yes":
+                status = True
+                break
+            elif pay_status.lower() == "no":
+                status = False
+                break
+            else:
+                print("Invalid input: please enter yes/no to confirm your order.")
+        return status
+
+    def order_result_operator(self, status):
+        if not status:
+            print("No problem, please come again!")
+            for id, num in self.final_order_dic.items():
+                self.stock[id] += self.final_order_dic[id]
+                print(f"the latest stock after order cancellation: {self.stock}")
+        else:
+            print("Thank you for your order!")
 
 # Initiate store and menu
 Store = Inventory()
 stock = Store.build_initial_stock()
 print(stock)
 
-
 Burgers_menu = Store.get_catalogue("Burgers")
 Sides_menu = Store.get_catalogue("Sides")
 Drinks_menu = Store.get_catalogue("Drinks")
-
 
 # Display menu
 print("")
@@ -288,14 +369,21 @@ Store.build_menu(Drinks_menu.get("Chocolate Milk Shake"))
 print("")
 print("-" * 10, "End of Menu", "-" * 10)
 
-# Input order
-order_list = input_order(stock)
-# print(order_list)
-order_dic = order_list_generator(order_list)
-# print(order_dic)
-test = Store.combo_calculator(order_dic)
-print(test)
-# print(test)
-# print(combo_maker(test)[1])
-# print(test)
-# print(combo_popper(test))
+
+while True:
+    order_list = input_order(stock)
+    initial_order_dic = order_list_generator(order_list)
+    final_order_dic = Store.alter_initial_order(Store,initial_order_dic)
+
+    order_result = Store.combo_calculator(final_order_dic)
+    Store.order_teller(order_result[0], order_result[1])
+
+    order_status = Store.pay_teller()
+    Store.order_result_operator(order_status)
+    new_order = new_order_initiator()
+    if not new_order:
+        break
+
+
+
+
