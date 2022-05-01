@@ -1,6 +1,6 @@
 # Task site: https://www.programmingexpert.io/projects/async-point-of-sale-system
-
-import asyncio
+#
+# import asyncio
 import random
 
 
@@ -144,7 +144,7 @@ class Inventory:
         for i in range(1, 21):
             stock = random.randint(1, 10)
             self.stock.update({i: stock})
-        print(f"the initial stock: {self.stock}")
+        # print(f"the initial stock: {self.stock}")
         return self.stock
 
     def build_menu(self, lst):
@@ -183,8 +183,8 @@ class Inventory:
             else:
                 order_dic[id] = deliver_status
         self.final_order_dic = order_dic
-        print(f"final_order_dic: {self.final_order_dic}")
-        print(f"the current stock: {self.stock}")
+        # print(f"final_order_dic: {self.final_order_dic}")
+        # print(f"the current stock: {self.stock}")
         return self.final_order_dic
 
     def combo_calculator(self, order_dic):
@@ -252,7 +252,8 @@ class Inventory:
                     single_product = {}
                     product_name = i.get("feature")
                     product_price = i.get("price")
-                    single_product.update({"product": product_name, "price": product_price})
+                    product_num = i.get("order_num")
+                    single_product.update({"product": product_name, "price": product_price,"number": product_num})
                     self.single_purchase_list.append(single_product)
                 break
 
@@ -287,6 +288,8 @@ class Inventory:
         bonus_rate = 0.15
         tax_rate = 0.05
         order_price = 0
+        single_product_dic = {}
+
         print("\nHere is a summary of your order: \n")
         for i in combo_list:
             combo_list = i.get("product")
@@ -301,17 +304,19 @@ class Inventory:
         for i in single_purchase_list:
             product = i.get("product")
             price = i.get("price")
+            number = i.get("number")
 
-            order_price += price
+            order_price += price * number
 
-            print(f"${price} {product}")
+            print(f"${price} {product} * {number}")
 
+        order_price = round(order_price,2)
         tax = round(order_price * tax_rate,2)
-        self.order_price = order_price + tax
+        self.order_price = round(order_price + tax,2)
 
         print(f"\nSubtotal: ${order_price}")
         print(f"Tax: ${tax}")
-        print(f"Total ${order_price + tax}")
+        print(f"Total: ${self.order_price}")
 
     def pay_teller(self):
         status = None
@@ -332,14 +337,14 @@ class Inventory:
             print("No problem, please come again!")
             for id, num in self.final_order_dic.items():
                 self.stock[id] += self.final_order_dic[id]
-                print(f"the latest stock after order cancellation: {self.stock}")
+                # print(f"the latest stock after order cancellation: {self.stock}")
         else:
             print("Thank you for your order!")
 
 # Initiate store and menu
 Store = Inventory()
 stock = Store.build_initial_stock()
-print(stock)
+# print(stock)
 
 Burgers_menu = Store.get_catalogue("Burgers")
 Sides_menu = Store.get_catalogue("Sides")
